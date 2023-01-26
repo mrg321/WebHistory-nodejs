@@ -32,6 +32,7 @@ let qs = require('qs');
 /**
 * Function that logs into Asus Admin Router APP backend and gets the token
 * @author   mrg321 https://www.mrmiguelrodriguez.com
+* @param    {String} baseUrl Router URL
 * @param    {String} user
 * @param    {String} password  
 */
@@ -81,6 +82,7 @@ const loginAsus = async (baseUrl, user, pass) => {
 * Function that gets the javascript code with all the web accesses.
 * It gets the source code of an array with all the URLs (hosts).
 * @author   mrg321 https://www.mrmiguelrodriguez.com
+* @param    {String} baseUrl Router URL
 * @param    {String} token Token coming fron the login function
 * @param    {Number} page Number of pages to get 
 */
@@ -113,7 +115,9 @@ const getWebHistoryCode = async (baseUrl, token, page) => {
 /**
 * Function that gets the list of clients that connect to the Asus Router.
 * It gets an array with Mac Address, Name and Nickname.
+* PENDING: Include IP
 * @author   mrg321 https://www.mrmiguelrodriguez.com
+* @param    {String} baseUrl Router URL
 * @param    {String} token Token coming fron the login function
 */
 const getClientList = async (baseUrl, token) => {
@@ -159,6 +163,7 @@ function hashCode(str) {
 * the input Date (fromDate) until last access got from the Router.
 * It also writes the accesses in the outputFile of the parameter.
 * @author   mrg321 https://www.mrmiguelrodriguez.com
+* @param    {String} baseUrl Router URL
 * @param    {String} usu User for login
 * @param    {String} pass Password for login
 * @param    {Number} pages Max number of pages to get
@@ -193,14 +198,27 @@ const getWebHistoryData = async (baseUrl, usu, pass, pages, fromDate, sep, outpu
         // Here item refers to a row in that 2D array
         let row = item;
         //first column is mac address
+        //console.log(row);
         let mac = row[0];
+        console.log(mac);
         let hash = hashCode(row.join(''));
         if (objClientList != null && mac != "") {
           //get name from mac
-          let name = objClientList.get_clientlist[mac].name;
+          let name = "";
+          try{
+            name = objClientList.get_clientlist[mac].name;
+          }catch(error){
+            //Name not found
+          }
           //get nickName
-          let nickName = objClientList.get_clientlist[mac].nickName;
-          //if nickName is mac address type, then ""
+          let nickName = "";
+          try{
+            nickName = objClientList.get_clientlist[mac].nickName;
+            //macType = nickName.match('^([0-9a-fA-F]{2}[:.-]){5}[0-9a-fA-F]{2}$');
+            //if nickName is mac address type, then ""
+          }catch(error){
+            //nickName not found
+          }
           let macType = nickName.match('^([0-9a-fA-F]{2}[:.-]){5}[0-9a-fA-F]{2}$');
           nickName = macType === null ? nickName : "";
           //if nickName is "", then return name
@@ -272,7 +290,6 @@ const getLastDateTimeExec = function (folder, separator) {
     if (file.match("History\-[0-9]+\.csv")){
       const allFileContents = fs.readFileSync(folder + file, 'utf-8');
       let firstLine = allFileContents.split(/\r?\n/)[0];
-      //console.log(firstLine.split(separator)[3]);
       let dateFr = new Date(Number(firstLine.split(";")[3]) * 1000);
       //console.log(dateFr.toLocaleDateString() + " " + dateFr.toLocaleTimeString());
       return dateFr; //return date taken from last file
@@ -291,4 +308,4 @@ let f = folderName + "History" + "-" + today.yyyyMMddHHmmss() + ".csv";
 //console.log(f);
 let dateFrom = getLastDateTimeExec(folderName, ";");
 //console.log(dateFrom.toLocaleDateString() + " " + dateFrom.toLocaleTimeString());
-getWebHistoryData("http://router.asus.com/", "user", "password", 500, dateFrom, ";", f);
+getWebHistoryData("http://router.asus.com/", "usu", "pass", 500, dateFrom, ";", f);
