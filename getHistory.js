@@ -200,7 +200,7 @@ const getWebHistoryData = async (baseUrl, usu, pass, pages, fromDate, sep, outpu
         //first column is mac address
         //console.log(row);
         let mac = row[0];
-        console.log(mac);
+        //console.log(mac);
         let hash = hashCode(row.join(''));
         if (objClientList != null && mac != "") {
           //get name from mac
@@ -214,8 +214,6 @@ const getWebHistoryData = async (baseUrl, usu, pass, pages, fromDate, sep, outpu
           let nickName = "";
           try{
             nickName = objClientList.get_clientlist[mac].nickName;
-            //macType = nickName.match('^([0-9a-fA-F]{2}[:.-]){5}[0-9a-fA-F]{2}$');
-            //if nickName is mac address type, then ""
           }catch(error){
             //nickName not found
           }
@@ -223,8 +221,9 @@ const getWebHistoryData = async (baseUrl, usu, pass, pages, fromDate, sep, outpu
           nickName = macType === null ? nickName : "";
           //if nickName is "", then return name
           name = nickName === "" ? name : nickName;
-          //Include hash as first column
-          row[0] = hash + sep + row[0] + sep + name;
+          let ip = objClientList.get_clientlist[mac].ip;
+          //Include hash as first column and also ip
+          row[0] = hash + sep + row[0] + sep + name + sep + ip;
         }
         //second column is date-time
         dateTime = new Date(Number(row[1]) * 1000); 
@@ -290,7 +289,8 @@ const getLastDateTimeExec = function (folder, separator) {
     if (file.match("History\-[0-9]+\.csv")){
       const allFileContents = fs.readFileSync(folder + file, 'utf-8');
       let firstLine = allFileContents.split(/\r?\n/)[0];
-      let dateFr = new Date(Number(firstLine.split(";")[3]) * 1000);
+      //Take 5th column of 1st file as last issued date.
+      let dateFr = new Date(Number(firstLine.split(separator)[4]) * 1000);
       //console.log(dateFr.toLocaleDateString() + " " + dateFr.toLocaleTimeString());
       return dateFr; //return date taken from last file
     }
